@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Juri 3</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #111;
+      color: white;
+      padding: 15px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    h1 {
+      color: #00ff00;
+      font-size: 1.8em;
+    }
+
+    .judge-id {
+      font-size: 1.1em;
+      color: #ccc;
+    }
+
+    .scoreboard {
+      display: flex;
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      gap: 15px;
+      flex: 1;
+    }
+
+    .player-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .player-name {
+      font-size: 1.4em;
+      font-weight: bold;
+      text-align: center;
+      padding: 10px;
+      border-radius: 8px;
+      color: white;
+      width: 100%;
+      margin-bottom: 12px;
+    }
+
+    .btn-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+
+    button {
+      width: 100%;
+      padding: 18px;
+      font-size: 1.4em;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.1s, background 0.2s;
+    }
+
+    button:active {
+      transform: scale(0.97);
+      opacity: 0.9;
+    }
+
+    .btn-red {
+      background: #d32f2f;
+      color: white;
+    }
+
+    .btn-blue {
+      background: #1976d2;
+      color: white;
+    }
+
+    .score-display {
+      margin-top: 15px;
+      padding: 12px;
+      font-size: 1.2em;
+      text-align: center;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 400px;
+      margin: 15px auto;
+    }
+
+    .success {
+      background: #00ff00;
+      color: #000;
+      font-weight: bold;
+    }
+
+    .pending {
+      background: #333;
+      color: #ccc;
+    }
+
+    @media (max-width: 768px) {
+      .scoreboard {
+        flex-direction: row;
+        gap: 10px;
+      }
+
+      .player-panel {
+        padding: 12px;
+      }
+
+      .player-name {
+        font-size: 1.3em;
+        padding: 8px;
+      }
+
+      button {
+        padding: 15px;
+        font-size: 1.2em;
+      }
+
+      .score-display {
+        font-size: 1.1em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🎯 Juri 3</h1>
+    <div class="judge-id">Panel Penilaian</div>
+  </header>
+
+  <div class="scoreboard">
+    <!-- Player 1 -->
+    <div class="player-panel">
+      <div class="player-name" id="player1Name" style="background: #d32f2f;">Loading...</div>
+      <div class="btn-stack">
+        <button class="btn-red" onclick="sendScore('player1', 3)">+3</button>
+        <button class="btn-red" onclick="sendScore('player1', 2)">+2</button>
+        <button class="btn-red" onclick="sendScore('player1', 1)">+1</button>
+      </div>
+    </div>
+
+    <!-- Player 2 -->
+    <div class="player-panel">
+      <div class="player-name" id="player2Name" style="background: #1976d2;">Loading...</div>
+      <div class="btn-stack">
+        <button class="btn-blue" onclick="sendScore('player2', 3)">+3</button>
+        <button class="btn-blue" onclick="sendScore('player2', 2)">+2</button>
+        <button class="btn-blue" onclick="sendScore('player2', 1)">+1</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="score-display pending" id="currentScore">Tekan tombol untuk memberi nilai</div>
+
+  <!-- Socket.IO -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const judge = 'judge3';
+
+    socket.on('scoreboard-update', (data) => {
+      document.getElementById('player1Name').textContent = data.player1Name || 'PLAYER 1';
+      document.getElementById('player2Name').textContent = data.player2Name || 'PLAYER 2';
+    });
+
+    socket.on('judge-feedback', (data) => {
+      const display = document.getElementById('currentScore');
+      if (data.consensus) {
+        const playerName = data.player === 'player1'
+          ? document.getElementById('player1Name').textContent
+          : document.getElementById('player2Name').textContent;
+
+        display.textContent = `✅ +${data.points} untuk ${playerName}`;
+        display.className = 'score-display success';
+
+        setTimeout(() => {
+          display.textContent = 'Tekan tombol untuk memberi nilai';
+          display.className = 'score-display pending';
+        }, 3000);
+      }
+    });
+
+    function sendScore(player, points) {
+      socket.emit('judge-score', { judge, player, points });
+    }
+  </script>
+</body>
+</html>

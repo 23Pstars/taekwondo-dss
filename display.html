@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Taekwondo Scoreboard</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #000;
+      color: white;
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: start;
+      min-height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .scoreboard {
+      width: 90%;
+      max-width: 1400px;
+      min-height: 500px;
+      height: 80vh;
+      max-height: 95vh;
+      background: linear-gradient(to bottom, #000, #111);
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+      position: relative;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #444;
+    }
+
+    .logo {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .logo img {
+      height: 100px;
+      object-fit: contain;
+    }
+
+    .match-info {
+      text-align: center;
+      font-size: 1.3vw;
+      color: #fff;
+      font-weight: bold;
+      flex: 1;
+    }
+
+    .flag {
+      width: 60px;
+      height: 40px;
+      border-radius: 5px;
+    }
+
+    .red-flag {
+      background: linear-gradient(45deg, #c62828, #ff0000);
+      border: 2px solid #000;
+    }
+
+    .blue-flag {
+      background: linear-gradient(45deg, #0060b0, #0078d4);
+      border: 2px solid #000;
+    }
+
+    .main-display {
+      display: flex;
+      flex: 1;
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .player-box {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    .red-box {
+      background-color: #d32f2f;
+      color: white;
+    }
+
+    .blue-box {
+      background-color: #1976d2;
+      color: white;
+    }
+
+    .player-name {
+      font-size: 1.8vw;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin: 8px 0;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    .main-score-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex: 1;
+      width: 100%;
+      margin: 10px 0;
+    }
+
+    .main-score {
+      font-size: 8vw;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .stats {
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+      font-size: 1.1vw;
+      padding-top: 5px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 0.9em;
+      color: #ccc;
+    }
+
+    .stat-value {
+      font-size: 1.6em;
+      font-weight: bold;
+    }
+
+    .green {
+      color: #00ff00;
+    }
+
+    .center-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      margin: 0 10px;
+    }
+
+    .match-id {
+      font-size: 1.4vw;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+
+    .duration {
+      font-size: 4vw;
+      margin: 15px 0;
+      font-weight: bold;
+      color: #ffeb3b;
+    }
+
+    .round-number {
+      font-size: 1.8vw;
+      margin-top: 10px;
+    }
+
+    .winner {
+      font-size: 2.5vw;
+      color: yellow;
+      text-align: center;
+      margin-top: 15px;
+      font-weight: bold;
+      background-color: rgba(0, 0, 0, 0.8);
+      padding: 10px;
+      border-radius: 10px;
+      border: 2px solid yellow;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    @media (max-width: 1024px) {
+      .logo img { height: 80px; }
+      .match-info { font-size: 1.2em; }
+      .player-name { font-size: 1.6em; }
+      .main-score { font-size: 5em; }
+      .duration { font-size: 3em; }
+      .round-number { font-size: 1.3em; }
+      .stats { font-size: 1em; }
+    }
+
+    @media (max-width: 768px) {
+      .main-display { flex-direction: column; }
+      .logo img { height: 60px; }
+      .player-name { font-size: 1.4em; }
+      .main-score { font-size: 4em; }
+      .stats { font-size: 0.9em; }
+    }
+
+    @media (max-height: 600px) {
+      .main-score { font-size: 3.5em; }
+      .player-name { font-size: 1.3em; }
+      .duration { font-size: 2.2em; }
+    }
+  </style>
+</head>
+<body>
+  <div class="scoreboard">
+    <div class="header">
+      <div class="logo">
+        <img src="logo.png" alt="World Taekwondo">
+      </div>
+      <div class="match-info" id="matchInfo">CLASS - CATEGORY</div>
+      <div class="logo">
+        <img src="logo-ti.png" alt="Daedo">
+      </div>
+    </div>
+
+    <div class="main-display">
+      <!-- Player 1 -->
+      <div class="player-box red-box">
+        <div class="flag red-flag"></div>
+        <div class="player-name" id="player1Name">PLAYER 1</div>
+        <div class="main-score-wrapper">
+          <div class="main-score" id="score1">0</div>
+        </div>
+        <div class="stats">
+          <!-- GAM-JEOM -->
+          <div class="stat-item">
+            <div class="stat-label">GAM-JEOM</div>
+            <div class="stat-value" id="gamJeom1">0</div>
+          </div>
+          <!-- #WON -->
+          <div class="stat-item">
+            <div class="stat-label">#WON</div>
+            <div class="stat-value green" id="roundWins1">0</div>
+          </div>
+          <!-- HITS -->
+          <div class="stat-item">
+            <div class="stat-label">HITS</div>
+            <div class="stat-value green" id="hits1">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center Panel -->
+      <div class="center-panel">
+        <div class="match-id" id="matchId">MATCH<br>1001</div>
+        <div class="duration" id="duration">2:00</div>
+        <div class="round-number" id="roundNumber">ROUND 1</div>
+        <div id="winner" class="winner" style="display: none;"></div>
+      </div>
+
+      <!-- Player 2 -->
+      <div class="player-box blue-box">
+        <div class="flag blue-flag"></div>
+        <div class="player-name" id="player2Name">PLAYER 2</div>
+        <div class="main-score-wrapper">
+          <div class="main-score" id="score2">0</div>
+        </div>
+        <div class="stats">
+          <!-- HITS -->
+          <div class="stat-item">
+            <div class="stat-label">HITS</div>
+            <div class="stat-value green" id="hits2">0</div>
+          </div>
+          <!-- #WON -->
+          <div class="stat-item">
+            <div class="stat-label">#WON</div>
+            <div class="stat-value green" id="roundWins2">0</div>
+          </div>
+          <!-- GAM-JEOM -->
+          <div class="stat-item">
+            <div class="stat-label">GAM-JEOM</div>
+            <div class="stat-value" id="gamJeom2">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Socket.IO -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    socket.on('scoreboard-update', (data) => {
+      document.getElementById('player1Name').textContent = data.player1Name || 'PLAYER 1';
+      document.getElementById('player2Name').textContent = data.player2Name || 'PLAYER 2';
+      document.getElementById('matchInfo').textContent = data.matchInfo || '';
+      document.getElementById('matchId').innerHTML = 'MATCH<br>' + (data.matchId || '');
+      document.getElementById('roundNumber').textContent = data.roundNumber || 'ROUND 1';
+
+      const mins = Math.floor(data.duration / 60).toString().padStart(2, '0');
+      const secs = (data.duration % 60).toString().padStart(2, '0');
+      document.getElementById('duration').textContent = `${mins}:${secs}`;
+
+      document.getElementById('score1').textContent = data.score1 || 0;
+      document.getElementById('score2').textContent = data.score2 || 0;
+      document.getElementById('gamJeom1').textContent = data.gamJeom1 || 0;
+      document.getElementById('gamJeom2').textContent = data.gamJeom2 || 0;
+      document.getElementById('roundWins1').textContent = data.roundWins1 || 0;
+      document.getElementById('roundWins2').textContent = data.roundWins2 || 0;
+
+      // ✅ Update HITS
+      document.getElementById('hits1').textContent = data.hits1 || 0;
+      document.getElementById('hits2').textContent = data.hits2 || 0;
+
+      const winnerDiv = document.getElementById('winner');
+      if (data.winner && data.winner !== 'draw') {
+        const winnerName = data.winner === 'player1' ? data.player1Name : data.player2Name;
+        winnerDiv.textContent = `${winnerName} WIN!`;
+        winnerDiv.style.display = 'block';
+      } else if (data.winner === 'draw') {
+        winnerDiv.textContent = 'DRAW!';
+        winnerDiv.style.display = 'block';
+      } else {
+        winnerDiv.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>

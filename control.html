@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Control Panel - Taekwondo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      padding: 40px;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #00ff00;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      font-size: 1.1em;
+      border: none;
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+
+    input, select {
+      background: #333;
+      color: white;
+    }
+
+    button {
+      background: #00ff00;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn-red {
+      background: #d32f2f;
+      color: white;
+    }
+
+    .btn-blue {
+      background: #1976d2;
+      color: white;
+    }
+
+    .btn-reset {
+      background: #ff9800;
+      color: black;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 5px;
+    }
+
+    .btn-group button {
+      flex: 1;
+    }
+
+    .timer-controls, .gam-jeom-controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .timer-controls button, .gam-jeom-controls button {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔧 Control Panel</h1>
+
+  <form id="controlForm">
+    <div class="form-group">
+      <label for="player1Name">Player 1 Name (Red)</label>
+      <input type="text" id="player1Name" placeholder="e.g. PLAYER 1">
+    </div>
+
+    <div class="form-group">
+      <label for="player2Name">Player 2 Name (Blue)</label>
+      <input type="text" id="player2Name" placeholder="e.g. PLAYER 2">
+    </div>
+
+    <div class="form-group">
+      <label for="matchInfo">Match Info</label>
+      <input type="text" id="matchInfo" placeholder="e.g. SENORS - Final M -58KG">
+    </div>
+
+    <div class="form-group">
+      <label for="matchId">Match ID</label>
+      <input type="text" id="matchId" placeholder="e.g. 1001">
+    </div>
+
+    <div class="form-group">
+      <label for="roundNumber">Round Number</label>
+      <select id="roundNumber">
+        <option value="ROUND 1">ROUND 1</option>
+        <option value="ROUND 2">ROUND 2</option>
+        <option value="ROUND 3">ROUND 3</option>
+        <option value="FINAL ROUND">FINAL ROUND</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="durationInput">Durasi per Ronde</label>
+      <input type="text" id="durationInput" placeholder="Contoh: 2:00" value="2:00">
+    </div>
+
+    <div class="form-group">
+      <label>Timer Kontrol</label>
+      <div class="timer-controls">
+        <button type="button" id="startBtn">Start</button>
+        <button type="button" id="pauseBtn" style="display: none;">Pause</button>
+        <button type="button" id="resetBtn">Reset</button>
+      </div>
+    </div>
+
+    <!-- 🔥 Gam-Jeom -->
+    <div class="form-group">
+      <label>Penalti: Gam-Jeom</label>
+      <div class="gam-jeom-controls">
+        <button type="button" id="gamJeom1Btn" class="btn-red">Gam-Jeom<br>Player 1</button>
+        <button type="button" id="gamJeom2Btn" class="btn-blue">Gam-Jeom<br>Player 2</button>
+      </div>
+    </div>
+
+    <!-- 🎯 Skor Manual -->
+    <div class="form-group">
+      <label>Tambah/Kurangi Poin</label>
+      <div style="display: flex; gap: 10px;">
+        <div style="flex: 1;">
+          <div style="text-align: center; margin-bottom: 5px; color: #d32f2f;">Player 1</div>
+          <div class="btn-group">
+            <button type="button" id="score1Up">+1</button>
+            <button type="button" id="score1Down">-1</button>
+          </div>
+        </div>
+        <div style="flex: 1;">
+          <div style="text-align: center; margin-bottom: 5px; color: #1976d2;">Player 2</div>
+          <div class="btn-group">
+            <button type="button" id="score2Up">+1</button>
+            <button type="button" id="score2Down">-1</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🏆 Penentuan Pemenang Manual -->
+    <div class="form-group">
+      <label>Penentuan Pemenang</label>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button type="button" id="winnerPlayer1Btn" class="btn-red" style="flex: 1; padding: 15px;">
+          Player 1 Menang
+        </button>
+        <button type="button" id="winnerPlayer2Btn" class="btn-blue" style="flex: 1; padding: 15px;">
+          Player 2 Menang
+        </button>
+        <button type="button" id="drawBtn" style="flex: 1; padding: 15px; background: #ff9800;">
+          Seri / Draw
+        </button>
+      </div>
+    </div>
+
+    <!-- 🔄 Reset -->
+    <div class="form-group">
+      <button type="button" id="resetScoresBtn" class="btn-reset">Reset Skor & Penalti</button>
+    </div>
+
+    <div class="form-group">
+      <button type="button" id="resetWinsBtn" class="btn-reset">Reset #WON (Match Baru)</button>
+    </div>
+
+    <button type="submit">Update & Simpan</button>
+  </form>
+
+  <!-- Socket.IO -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    // Load data saat terhubung
+    socket.on('scoreboard-update', (data) => {
+      document.getElementById('player1Name').value = data.player1Name || 'PLAYER 1';
+      document.getElementById('player2Name').value = data.player2Name || 'PLAYER 2';
+      document.getElementById('matchInfo').value = data.matchInfo || '';
+      document.getElementById('matchId').value = data.matchId || '';
+      document.getElementById('roundNumber').value = data.roundNumber || 'ROUND 1';
+
+      const mins = Math.floor(data.initialDuration / 60);
+      const secs = (data.initialDuration % 60).toString().padStart(2, '0');
+      document.getElementById('durationInput').value = `${mins}:${secs}`;
+    });
+
+    // Update data umum
+    document.getElementById('controlForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const durationInput = document.getElementById('durationInput').value.trim();
+      let durationSeconds = 120;
+
+      const [m, s] = durationInput.split(':').map(Number);
+      if (!isNaN(m) && !isNaN(s) && s < 60 && m >= 0) {
+        durationSeconds = m * 60 + s;
+      } else {
+        alert('Format durasi salah! Contoh: 2:00');
+        return;
+      }
+
+      const data = {
+        player1Name: (document.getElementById('player1Name').value || 'PLAYER 1').toUpperCase().trim(),
+        player2Name: (document.getElementById('player2Name').value || 'PLAYER 2').toUpperCase().trim(),
+        matchInfo: document.getElementById('matchInfo').value.trim(),
+        matchId: document.getElementById('matchId').value.trim(),
+        roundNumber: document.getElementById('roundNumber').value,
+        duration: durationSeconds
+      };
+
+      socket.emit('update-scoreboard', data);
+      alert('✅ Data berhasil diperbarui!');
+    });
+
+    // Timer control
+    document.getElementById('startBtn').addEventListener('click', () => {
+      socket.emit('timer-control', 'start');
+    });
+
+    document.getElementById('pauseBtn').addEventListener('click', () => {
+      socket.emit('timer-control', 'pause');
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      socket.emit('timer-control', 'reset');
+    });
+
+    // Gam-Jeom
+    document.getElementById('gamJeom1Btn').addEventListener('click', () => {
+      socket.emit('add-gam-jeom', 'player1');
+    });
+
+    document.getElementById('gamJeom2Btn').addEventListener('click', () => {
+      socket.emit('add-gam-jeom', 'player2');
+    });
+
+    // Skor manual
+    document.getElementById('score1Up').addEventListener('click', () => {
+      socket.emit('adjust-score', { player: 'player1', amount: 1 });
+    });
+
+    document.getElementById('score1Down').addEventListener('click', () => {
+      socket.emit('adjust-score', { player: 'player1', amount: -1 });
+    });
+
+    document.getElementById('score2Up').addEventListener('click', () => {
+      socket.emit('adjust-score', { player: 'player2', amount: 1 });
+    });
+
+    document.getElementById('score2Down').addEventListener('click', () => {
+      socket.emit('adjust-score', { player: 'player2', amount: -1 });
+    });
+
+    // Penentuan pemenang manual
+    document.getElementById('winnerPlayer1Btn').addEventListener('click', () => {
+      if (confirm('Tetapkan Player 1 sebagai pemenang?')) {
+        socket.emit('force-winner', 'player1');
+      }
+    });
+
+    document.getElementById('winnerPlayer2Btn').addEventListener('click', () => {
+      if (confirm('Tetapkan Player 2 sebagai pemenang?')) {
+        socket.emit('force-winner', 'player2');
+      }
+    });
+
+    document.getElementById('drawBtn').addEventListener('click', () => {
+      if (confirm('Tetapkan ronde ini seri?')) {
+        socket.emit('force-winner', 'draw');
+      }
+    });
+
+    // Reset skor & penalti
+    document.getElementById('resetScoresBtn').addEventListener('click', () => {
+      if (confirm('Reset semua skor dan penalti?')) {
+        socket.emit('reset-scores');
+      }
+    });
+
+    // Reset #WON
+    document.getElementById('resetWinsBtn').addEventListener('click', () => {
+      if (confirm('Reset jumlah kemenangan ronde? (Match baru)')) {
+        socket.emit('reset-round-wins');
+      }
+    });
+
+    // Update tombol UI
+    socket.on('timer-control', (action) => {
+      const startBtn = document.getElementById('startBtn');
+      const pauseBtn = document.getElementById('pauseBtn');
+      if (action === 'start') {
+        startBtn.style.display = 'none';
+        pauseBtn.style.display = 'inline';
+      } else if (action === 'pause') {
+        pauseBtn.style.display = 'none';
+        startBtn.style.display = 'inline';
+      }
+    });
+  </script>
+</body>
+</html>

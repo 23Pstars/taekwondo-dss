@@ -1,0 +1,309 @@
+// server.js
+const express = require('express');
+const { Server } = require('socket.io');
+const http = require('http');
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+
+// Data utama
+let scoreboardData = {
+  player1Name: "PLAYER 1",
+  player2Name: "PLAYER 2",
+  matchInfo: "CLASS - CATEGORY",
+  matchId: "1001",
+  roundNumber: "ROUND 1",
+  initialDuration: 120,
+  duration: 120,
+  timerRunning: false,
+  gamJeom1: 0,
+  gamJeom2: 0,
+  score1: 0,
+  score2: 0,
+  roundWins1: 0,
+  roundWins2: 0,
+  hits1: 0,   // Jumlah klik juri untuk Player 1
+  hits2: 0,   // Jumlah klik juri untuk Player 2
+  winner: null,
+  roundEnded: false
+};
+
+// Riwayat penilaian juri (untuk konsensus)
+const judgeHistory = {
+  judge1: { player: null, points: null, timestamp: 0 },
+  judge2: { player: null, points: null, timestamp: 0 },
+  judge3: { player: null, points: null, timestamp: 0 }
+};
+
+let timerInterval = null;
+
+// Serve file statis
+app.use(express.static(__dirname));
+
+io.on('connection', (socket) => {
+  console.log('✅ User connected:', socket.id);
+  socket.emit('scoreboard-update', scoreboardData);
+
+  // Update data umum dari control.html
+  socket.on('update-scoreboard', (data) => {
+    if (data.player1Name !== undefined) scoreboardData.player1Name = data.player1Name.toUpperCase().trim();
+    if (data.player2Name !== undefined) scoreboardData.player2Name = data.player2Name.toUpperCase().trim();
+    if (data.matchInfo !== undefined) scoreboardData.matchInfo = data.matchInfo.trim();
+    if (data.matchId !== undefined) scoreboardData.matchId = data.matchId.trim();
+    if (data.roundNumber !== undefined) scoreboardData.roundNumber = data.roundNumber;
+
+    if (data.duration !== undefined) {
+      scoreboardData.initialDuration = data.duration;
+      scoreboardData.duration = data.duration;
+    }
+
+    // Reset status saat ganti pertandingan
+    scoreboardData.winner = null;
+    scoreboardData.roundEnded = false;
+    io.emit('scoreboard-update', scoreboardData);
+  });
+
+  // Kontrol timer
+  socket.on('timer-control', (action) => {
+    if (action === 'start') {
+      if (scoreboardData.winner || scoreboardData.roundEnded) return;
+      if (!scoreboardData.timerRunning && scoreboardData.duration > 0) {
+        scoreboardData.timerRunning = true;
+        clearInterval(timerInterval);
+
+        timerInterval = setInterval(() => {
+          if (scoreboardData.duration > 0) {
+            scoreboardData.duration--;
+            io.emit('scoreboard-update', scoreboardData);
+            checkVictoryByPointsGap(); // Cek selisih tiap detik
+          } else {
+            scoreboardData.timerRunning = false;
+            clearInterval(timerInterval);
+            endRoundAutomatically();
+          }
+        }, 1000);
+
+        io.emit('timer-control', 'start');
+      }
+    } else if (action === 'pause') {
+      scoreboardData.timerRunning = false;
+      clearInterval(timerInterval);
+      io.emit('timer-control', 'pause');
+    } else if (action === 'reset') {
+      scoreboardData.timerRunning = false;
+      clearInterval(timerInterval);
+      scoreboardData.duration = scoreboardData.initialDuration;
+      scoreboardData.winner = null;
+      scoreboardData.roundEnded = false;
+      io.emit('scoreboard-update', scoreboardData);
+      io.emit('timer-control', 'pause');
+    }
+  });
+
+  // Tambah/kurangi skor dari control
+  socket.on('adjust-score', (data) => {
+    if (scoreboardData.roundEnded) return;
+
+    const { player, amount } = data;
+    if (player === 'player1') {
+      scoreboardData.score1 = Math.max(0, scoreboardData.score1 + amount);
+    } else if (player === 'player2') {
+      scoreboardData.score2 = Math.max(0, scoreboardData.score2 + amount);
+    }
+
+    io.emit('scoreboard-update', scoreboardData);
+    checkVictoryByPointsGap();
+  });
+
+  // Penalti Gam-Jeom
+  socket.on('add-gam-jeom', (player) => {
+    if (player === 'player1' && scoreboardData.gamJeom1 < 5) {
+      scoreboardData.gamJeom1++;
+      scoreboardData.score2++;
+
+      if (scoreboardData.gamJeom1 >= 5 && !scoreboardData.roundEnded) {
+        endRoundByDisqualification('player2');
+      }
+    } else if (player === 'player2' && scoreboardData.gamJeom2 < 5) {
+      scoreboardData.gamJeom2++;
+      scoreboardData.score1++;
+
+      if (scoreboardData.gamJeom2 >= 5 && !scoreboardData.roundEnded) {
+        endRoundByDisqualification('player1');
+      }
+    }
+
+    if (!scoreboardData.roundEnded) {
+      io.emit('scoreboard-update', scoreboardData);
+      checkVictoryByPointsGap();
+    }
+  });
+
+  // Skor dari juri (konsensus)
+  socket.on('judge-score', (data) => {
+    const { judge, player, points } = data;
+    if (!['judge1', 'judge2', 'judge3'].includes(judge)) return;
+
+    const now = Date.now();
+    judgeHistory[judge] = { player, points, timestamp: now };
+
+    let count = 1;
+    for (const other of Object.keys(judgeHistory)) {
+      if (other === judge) continue;
+      const entry = judgeHistory[other];
+      const timeDiff = now - entry.timestamp;
+      if (timeDiff <= 5000 && entry.player === player && entry.points === points) {
+        count++;
+      }
+    }
+
+    // Tambah skor hanya jika konsensus
+    if (count >= 2) {
+      if (player === 'player1') {
+        scoreboardData.score1 += points;
+      } else if (player === 'player2') {
+        scoreboardData.score2 += points;
+      }
+      io.emit('scoreboard-update', scoreboardData);
+      checkVictoryByPointsGap();
+    }
+
+    // ✅ SELALU tambah HITS, terlepas dari konsensus
+    if (player === 'player1') {
+      scoreboardData.hits1++;
+    } else if (player === 'player2') {
+      scoreboardData.hits2++;
+    }
+
+    io.emit('scoreboard-update', scoreboardData);
+
+    socket.emit('judge-feedback', { consensus: count >= 2, player, points });
+  });
+
+  // Penentuan pemenang manual
+  socket.on('force-winner', (winner) => {
+    if (scoreboardData.roundEnded) return;
+
+    scoreboardData.roundEnded = true;
+    scoreboardData.timerRunning = false;
+    clearInterval(timerInterval);
+
+    if (winner === 'player1') {
+      scoreboardData.winner = 'player1';
+      scoreboardData.roundWins1++;
+    } else if (winner === 'player2') {
+      scoreboardData.winner = 'player2';
+      scoreboardData.roundWins2++;
+    } else if (winner === 'draw') {
+      scoreboardData.winner = 'draw';
+    }
+
+    io.emit('scoreboard-update', scoreboardData);
+    io.emit('timer-control', 'pause');
+  });
+
+  // Reset skor & penalti
+  socket.on('reset-scores', () => {
+    scoreboardData.score1 = 0;
+    scoreboardData.score2 = 0;
+    scoreboardData.gamJeom1 = 0;
+    scoreboardData.gamJeom2 = 0;
+    scoreboardData.hits1 = 0;
+    scoreboardData.hits2 = 0;
+    scoreboardData.winner = null;
+    scoreboardData.roundEnded = false;
+    scoreboardData.timerRunning = false;
+    clearInterval(timerInterval);
+    io.emit('scoreboard-update', scoreboardData);
+    io.emit('timer-control', 'pause');
+  });
+
+  // Reset jumlah kemenangan ronde
+  socket.on('reset-round-wins', () => {
+    scoreboardData.roundWins1 = 0;
+    scoreboardData.roundWins2 = 0;
+    io.emit('scoreboard-update', scoreboardData);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('❌ User disconnected:', socket.id);
+  });
+});
+
+// Cek kemenangan karena selisih skor ≥12
+function checkVictoryByPointsGap() {
+  if (scoreboardData.roundEnded) return;
+
+  const diff = Math.abs(scoreboardData.score1 - scoreboardData.score2);
+  if (diff >= 12) {
+    scoreboardData.roundEnded = true;
+    scoreboardData.timerRunning = false;
+    clearInterval(timerInterval);
+
+    if (scoreboardData.score1 > scoreboardData.score2) {
+      scoreboardData.winner = 'player1';
+      scoreboardData.roundWins1++;
+    } else {
+      scoreboardData.winner = 'player2';
+      scoreboardData.roundWins2++;
+    }
+
+    io.emit('scoreboard-update', scoreboardData);
+    io.emit('timer-control', 'pause');
+  }
+}
+
+// Akhiri ronde saat waktu habis
+function endRoundAutomatically() {
+  if (scoreboardData.roundEnded) return;
+
+  scoreboardData.roundEnded = true;
+  scoreboardData.timerRunning = false;
+  clearInterval(timerInterval);
+
+  if (scoreboardData.score1 > scoreboardData.score2) {
+    scoreboardData.winner = 'player1';
+    scoreboardData.roundWins1++;
+  } else if (scoreboardData.score2 > scoreboardData.score1) {
+    scoreboardData.winner = 'player2';
+    scoreboardData.roundWins2++;
+  } else {
+    scoreboardData.winner = 'draw';
+  }
+
+  io.emit('scoreboard-update', scoreboardData);
+}
+
+// Diskualifikasi karena Gam-Jeom = 5
+function endRoundByDisqualification(winnerPlayer) {
+  scoreboardData.roundEnded = true;
+  scoreboardData.timerRunning = false;
+  clearInterval(timerInterval);
+
+  scoreboardData.winner = winnerPlayer;
+  if (winnerPlayer === 'player1') {
+    scoreboardData.roundWins1++;
+  } else {
+    scoreboardData.roundWins2++;
+  }
+
+  io.emit('scoreboard-update', scoreboardData);
+}
+
+const PORT = 3000;
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`==================================================`);
+  console.log(`   🥋 Taekwondo Scoreboard Berjalan`);
+  console.log(`   Akses: http://<IP-ANDA>:${PORT}/display.html`);
+  console.log(`   Kontrol: http://<IP-ANDA>:${PORT}/control.html`);
+  console.log(`   Juri 1: http://<IP-ANDA>:${PORT}/judge1.html`);
+  console.log(`   Juri 2: http://<IP-ANDA>:${PORT}/judge2.html`);
+  console.log(`   Juri 3: http://<IP-ANDA>:${PORT}/judge3.html`);
+  console.log(`==================================================`);
+});
