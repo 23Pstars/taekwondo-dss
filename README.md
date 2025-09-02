@@ -43,7 +43,7 @@ Interface untuk masing-masing juri (1, 2, dan 3) untuk memberikan penilaian.
 ## 🚀 Cara Menjalankan
 
 ### Prerequisites
-- Node.js (v14 atau lebih baru)
+- Node.js (v18 atau lebih baru)
 - npm
 
 ### Instalasi
@@ -89,24 +89,3 @@ Sistem ini dirancang untuk bekerja di berbagai perangkat:
 - Maksimal Gam-Jeom: 5
 - Batas selisih kemenangan otomatis: 12 poin
 - Waktu konsensus juri: 5 detik
-
-## 🤝 Kontribusi
-
-Kontribusi sangat diterima! Silakan:
-1. Fork repository ini
-2. Buat branch feature (`git checkout -b feature/AmazingFeature`)
-3. Commit perubahan (`git commit -m 'Add some AmazingFeature'`)
-4. Push ke branch (`git push origin feature/AmazingFeature`)
-5. Buat Pull Request
-
-## 📄 Lisensi
-
-Distributed under the ISC License. See `LICENSE` for more information.
-
-## 📞 Kontak
-
-Project Link: [https://github.com/23Pstars/taekwondo-dss](https://github.com/23Pstars/taekwondo-dss)
-
----
-
-**Sistem Penilaian Taekwondo Digital** - Mendukung pertandingan yang adil dan transparan dengan teknologi modern.
