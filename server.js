@@ -115,18 +115,16 @@ io.on('connection', (socket) => {
   });
 
   // Tambah/kurangi skor dari control
-  socket.on('adjust-score', (data) => {
-    if (scoreboardData.roundEnded) return;
-
-    const { player, amount } = data;
-    if (player === 'player1') {
-      scoreboardData.score1 = Math.max(0, scoreboardData.score1 + amount);
-    } else if (player === 'player2') {
-      scoreboardData.score2 = Math.max(0, scoreboardData.score2 + amount);
+  socket.on('adjust-score', (payload) => {
+    // payload: { player: 'player1'|'player2', amount: number }
+    try {
+      const player = payload && payload.player;
+      const amount = payload && Number(payload.amount) || 0;
+      // Use the main scoreboardData object directly
+      applyScoreChange(scoreboardData, io, player, amount);
+    } catch (err) {
+      console.error('adjust-score error', err);
     }
-
-    io.emit('scoreboard-update', scoreboardData);
-    checkVictoryByPointsGap();
   });
 
   // Penalti Gam-Jeom
@@ -306,6 +304,37 @@ io.on('connection', (socket) => {
     console.log('❌ User disconnected:', socket.id);
   });
 });
+
+// Helper: apply score change with max cap and auto-win at 24
+function applyScoreChange(state, io, player, amount) {
+  if (!state) return;
+  const key = player === 'player1' ? 'score1' : 'score2';
+  state[key] = (state[key] || 0) + Number(amount || 0);
+  // clamp between 0 and 24
+  if (state[key] < 0) state[key] = 0;
+  if (state[key] > 24) state[key] = 24;
+
+  // Broadcast updated scoreboard
+  io.emit('scoreboard-update', state);
+
+  // If reached max, declare winner once and finalize round server-side
+  if (state[key] >= 24 && !state.roundEnded) {
+    state.roundEnded = true;
+    state.timerRunning = false;
+    clearInterval(timerInterval);
+
+    state.winner = player;
+    if (player === 'player1') {
+      state.roundWins1 = (state.roundWins1 || 0) + 1;
+    } else if (player === 'player2') {
+      state.roundWins2 = (state.roundWins2 || 0) + 1;
+    }
+
+    io.emit('scoreboard-update', state);
+    io.emit('timer-control', 'pause');
+    io.emit('rest-timer-control', 'reset');
+  }
+}
 
 // Cek kemenangan karena selisih skor ≥12
 function checkVictoryByPointsGap() {
