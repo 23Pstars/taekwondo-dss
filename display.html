@@ -183,6 +183,14 @@
       letter-spacing: 1px;
     }
 
+    .timer-mode {
+      font-size: 2vw;
+      color: #00e5ff;
+      font-weight: bold;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+    }
+
     .duration {
       font-size: 8vw;
       margin: 15px 0;
@@ -283,6 +291,7 @@
       <!-- Center Panel -->
       <div class="center-panel">
         <div class="match-id" id="matchId">MATCH<br>1001</div>
+        <div class="timer-mode" id="timerMode">MATCH TIME</div>
         <div class="duration" id="duration">2:00</div>
         <div class="round-number" id="roundNumber">ROUND 1</div>
         <div id="winner" class="winner" style="display: none;"></div>
@@ -354,6 +363,94 @@
       } else {
         winnerDiv.style.display = 'none';
       }
+    });
+
+    // Client-side timer mode: 'match' or 'rest'
+    let currentTimer = 'match';
+    let latestMatchDuration = null; // seconds
+    let latestRestDuration = null; // seconds
+
+    function formatSecondsToMMSS(seconds) {
+      if (typeof seconds !== 'number' || isNaN(seconds)) return '0:00';
+      const mins = Math.floor(seconds / 60).toString().padStart(1, '0');
+      const secs = (seconds % 60).toString().padStart(2, '0');
+      return `${mins}:${secs}`;
+    }
+
+    function updateDurationDisplay(value) {
+      const el = document.getElementById('duration');
+      if (typeof value === 'number') {
+        el.textContent = formatSecondsToMMSS(value);
+      } else if (typeof value === 'string') {
+        el.textContent = value;
+      } else {
+        el.textContent = '0:00';
+      }
+    }
+
+    function setTimerMode(mode) {
+      const el = document.getElementById('timerMode');
+      if (!el) return;
+      if (mode === 'rest') {
+        el.textContent = 'REST TIME';
+        el.style.color = '#ff80ab';
+      } else {
+        el.textContent = 'MATCH TIME';
+        el.style.color = '#00e5ff';
+      }
+    }
+
+    // Keep track of latest durations when server sends updates
+    socket.on('scoreboard-update', (data) => {
+      if (typeof data.duration === 'number') latestMatchDuration = data.duration;
+      if (typeof data.restDuration === 'number') latestRestDuration = data.restDuration;
+      // Only update visible duration according to current mode
+      if (currentTimer === 'match' && latestMatchDuration != null) {
+        updateDurationDisplay(latestMatchDuration);
+        setTimerMode('match');
+      } else if (currentTimer === 'rest' && latestRestDuration != null) {
+        updateDurationDisplay(latestRestDuration);
+        setTimerMode('rest');
+      }
+    });
+
+    // When control triggers rest timer actions, switch to rest mode
+    socket.on('rest-timer-control', (payload) => {
+      // payload might be a string action or an object { action, duration }
+      const action = (payload && typeof payload === 'object') ? payload.action : payload;
+      if (action === 'start' || action === 'pause' || action === 'reset') {
+        currentTimer = 'rest';
+        setTimerMode('rest');
+      }
+      if (payload && typeof payload === 'object' && typeof payload.duration === 'number') {
+        latestRestDuration = payload.duration;
+      }
+      if (currentTimer === 'rest') {
+        if (latestRestDuration != null) updateDurationDisplay(latestRestDuration);
+      }
+    });
+
+    // When main timer control is used, switch back to match mode
+    socket.on('timer-control', (payload) => {
+      currentTimer = 'match';
+      setTimerMode('match');
+      if (payload && typeof payload === 'object' && typeof payload.duration === 'number') {
+        latestMatchDuration = payload.duration;
+      }
+      if (latestMatchDuration != null) updateDurationDisplay(latestMatchDuration);
+    });
+
+    // Support explicit tick events if server emits them
+    socket.on('rest-timer-tick', (seconds) => {
+      latestRestDuration = seconds;
+      setTimerMode('rest');
+      if (currentTimer === 'rest') updateDurationDisplay(seconds);
+    });
+
+    socket.on('timer-tick', (seconds) => {
+      latestMatchDuration = seconds;
+      setTimerMode('match');
+      if (currentTimer === 'match') updateDurationDisplay(seconds);
     });
   </script>
 </body>

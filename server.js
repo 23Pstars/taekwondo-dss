@@ -35,13 +35,21 @@ let scoreboardData = {
 };
 
 // Riwayat penilaian juri (untuk konsensus)
+// Tambahkan flag `consumed` untuk menandai vote yang sudah dipakai
+// dalam sebuah konsensus sehingga tidak dihitung ulang ketika
+// juri ketiga mengonfirmasi yang sama.
 const judgeHistory = {
-  judge1: { player: null, points: null, timestamp: 0 },
-  judge2: { player: null, points: null, timestamp: 0 },
-  judge3: { player: null, points: null, timestamp: 0 }
+  judge1: { player: null, points: null, timestamp: 0, consumed: false },
+  judge2: { player: null, points: null, timestamp: 0, consumed: false },
+  judge3: { player: null, points: null, timestamp: 0, consumed: false }
 };
 
 let timerInterval = null;
+
+// REST TIMER state (shared)
+let restTimerInterval = null;
+let restRemaining = 0;
+let restIsRunning = false;
 
 // Serve file statis
 app.use(express.static(__dirname));
@@ -151,25 +159,32 @@ io.on('connection', (socket) => {
     if (!['judge1', 'judge2', 'judge3'].includes(judge)) return;
 
     const now = Date.now();
-    judgeHistory[judge] = { player, points, timestamp: now };
+    // Simpan vote terbaru sebagai tidak-terpakai (consumed = false)
+    judgeHistory[judge] = { player, points, timestamp: now, consumed: false };
 
-    let count = 1;
-    for (const other of Object.keys(judgeHistory)) {
-      if (other === judge) continue;
-      const entry = judgeHistory[other];
+    // Kumpulkan daftar juri yang memiliki vote matching dan belum consumed
+    const matchedJudges = [];
+    for (const j of Object.keys(judgeHistory)) {
+      const entry = judgeHistory[j];
       const timeDiff = now - entry.timestamp;
-      if (timeDiff <= 5000 && entry.player === player && entry.points === points) {
-        count++;
+      if (!entry.consumed && timeDiff <= 5000 && entry.player === player && entry.points === points) {
+        matchedJudges.push(j);
       }
     }
 
-    // Tambah skor hanya jika konsensus
-    if (count >= 2) {
+    // Jika ada minimal 2 juri yang cocok (dan belum dipakai), berikan poin ONCE
+    if (matchedJudges.length >= 2) {
       if (player === 'player1') {
         scoreboardData.score1 += points;
       } else if (player === 'player2') {
         scoreboardData.score2 += points;
       }
+
+      // Tandai semua vote yang dipakai sebagai consumed agar tidak dipakai lagi
+      for (const j of matchedJudges) {
+        judgeHistory[j].consumed = true;
+      }
+
       io.emit('scoreboard-update', scoreboardData);
       checkVictoryByPointsGap();
     }
@@ -183,7 +198,7 @@ io.on('connection', (socket) => {
 
     io.emit('scoreboard-update', scoreboardData);
 
-    socket.emit('judge-feedback', { consensus: count >= 2, player, points });
+    socket.emit('judge-feedback', { consensus: matchedJudges.length >= 2, player, points });
   });
 
   // Penentuan pemenang manual
@@ -229,6 +244,62 @@ io.on('connection', (socket) => {
     scoreboardData.roundWins1 = 0;
     scoreboardData.roundWins2 = 0;
     io.emit('scoreboard-update', scoreboardData);
+  });
+
+  // Ensure main timer actions stop rest timer
+  socket.on('timer-control', (action) => {
+    // existing main timer handling happens elsewhere; additionally stop rest timer
+    if (restTimerInterval) {
+      clearInterval(restTimerInterval);
+      restTimerInterval = null;
+      restIsRunning = false;
+      // notify clients rest timer reset
+      io.emit('rest-timer-control', 'reset');
+      io.emit('rest-timer-tick', restRemaining);
+    }
+  });
+
+  socket.on('rest-timer-control', (payload) => {
+    const action = (payload && typeof payload === 'object') ? payload.action : payload;
+    const duration = (payload && typeof payload.duration === 'number') ? payload.duration : null;
+
+    if (action === 'start') {
+      if (duration !== null) restRemaining = duration;
+      if (restTimerInterval) clearInterval(restTimerInterval);
+      restIsRunning = true;
+      io.emit('rest-timer-control', 'start');
+      io.emit('rest-timer-tick', restRemaining);
+
+      restTimerInterval = setInterval(() => {
+        restRemaining = Math.max(0, restRemaining - 1);
+        io.emit('rest-timer-tick', restRemaining);
+        if (restRemaining <= 0) {
+          clearInterval(restTimerInterval);
+          restTimerInterval = null;
+          restIsRunning = false;
+          // notify reset/finished
+          io.emit('rest-timer-control', 'reset');
+        }
+      }, 1000);
+
+    } else if (action === 'pause') {
+      if (restTimerInterval) {
+        clearInterval(restTimerInterval);
+        restTimerInterval = null;
+      }
+      restIsRunning = false;
+      io.emit('rest-timer-control', 'pause');
+
+    } else if (action === 'reset') {
+      if (restTimerInterval) {
+        clearInterval(restTimerInterval);
+        restTimerInterval = null;
+      }
+      restIsRunning = false;
+      if (duration !== null) restRemaining = duration;
+      io.emit('rest-timer-tick', restRemaining);
+      io.emit('rest-timer-control', 'reset');
+    }
   });
 
   socket.on('disconnect', () => {

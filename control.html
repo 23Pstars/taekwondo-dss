@@ -134,6 +134,20 @@
       </div>
     </div>
 
+    <div class="form-group">
+      <label for="restDurationInput">Durasi Rest Time</label>
+      <input type="text" id="restDurationInput" placeholder="Contoh: 0:30" value="0:30">
+    </div>
+
+    <div class="form-group">
+      <label>Rest Timer Kontrol</label>
+      <div class="timer-controls">
+        <button type="button" id="restStartBtn">Start</button>
+        <button type="button" id="restPauseBtn" style="display: none;">Pause</button>
+        <button type="button" id="restResetBtn">Reset</button>
+      </div>
+    </div>
+
     <!-- 🔥 Gam-Jeom -->
     <div class="form-group">
       <label>Penalti: Gam-Jeom</label>
@@ -251,6 +265,40 @@
       socket.emit('timer-control', 'reset');
     });
 
+    // Rest Timer control
+    function parseTimeToSeconds(str) {
+      if (!str) return 0;
+      const parts = str.split(':').map(s => parseInt(s, 10));
+      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) return parts[0]*60 + parts[1];
+      if (parts.length === 1 && !isNaN(parts[0])) return parts[0];
+      return 0;
+    }
+
+    document.getElementById('restStartBtn').addEventListener('click', () => {
+      const input = document.getElementById('restDurationInput').value.trim();
+      const seconds = parseTimeToSeconds(input);
+      socket.emit('rest-timer-control', { action: 'start', duration: seconds });
+      // update UI immediately
+      document.getElementById('restStartBtn').style.display = 'none';
+      document.getElementById('restPauseBtn').style.display = 'inline';
+    });
+
+    document.getElementById('restPauseBtn').addEventListener('click', () => {
+      socket.emit('rest-timer-control', { action: 'pause' });
+      // update UI immediately
+      document.getElementById('restPauseBtn').style.display = 'none';
+      document.getElementById('restStartBtn').style.display = 'inline';
+    });
+
+    document.getElementById('restResetBtn').addEventListener('click', () => {
+      const input = document.getElementById('restDurationInput').value.trim();
+      const seconds = parseTimeToSeconds(input);
+      socket.emit('rest-timer-control', { action: 'reset', duration: seconds });
+      // reset UI to initial state
+      document.getElementById('restPauseBtn').style.display = 'none';
+      document.getElementById('restStartBtn').style.display = 'inline';
+    });
+
     // Gam-Jeom
     document.getElementById('gamJeom1Btn').addEventListener('click', () => {
       socket.emit('add-gam-jeom', 'player1');
@@ -314,6 +362,19 @@
     socket.on('timer-control', (action) => {
       const startBtn = document.getElementById('startBtn');
       const pauseBtn = document.getElementById('pauseBtn');
+      if (action === 'start') {
+        startBtn.style.display = 'none';
+        pauseBtn.style.display = 'inline';
+      } else if (action === 'pause') {
+        pauseBtn.style.display = 'none';
+        startBtn.style.display = 'inline';
+      }
+    });
+
+    // Update Rest timer tombol UI
+    socket.on('rest-timer-control', (action) => {
+      const startBtn = document.getElementById('restStartBtn');
+      const pauseBtn = document.getElementById('restPauseBtn');
       if (action === 'start') {
         startBtn.style.display = 'none';
         pauseBtn.style.display = 'inline';
