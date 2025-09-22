@@ -329,6 +329,7 @@
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
+    let lockDurationText = false; // prevent timer display from overriding custom text like PTG
 
     socket.on('scoreboard-update', (data) => {
       document.getElementById('player1Name').textContent = data.player1Name || 'PLAYER 1';
@@ -337,9 +338,12 @@
       document.getElementById('matchId').innerHTML = 'MATCH<br>' + (data.matchId || '');
       document.getElementById('roundNumber').textContent = data.roundNumber || 'ROUND 1';
 
-      const mins = Math.floor(data.duration / 60).toString().padStart(2, '0');
-      const secs = (data.duration % 60).toString().padStart(2, '0');
-      document.getElementById('duration').textContent = `${mins}:${secs}`;
+      // Only update duration from timer if not locked
+      if (!lockDurationText) {
+        const mins = Math.floor(data.duration / 60).toString().padStart(2, '0');
+        const secs = (data.duration % 60).toString().padStart(2, '0');
+        document.getElementById('duration').textContent = `${mins}:${secs}`;
+      }
 
       document.getElementById('score1').textContent = data.score1 || 0;
       document.getElementById('score2').textContent = data.score2 || 0;
@@ -357,11 +361,22 @@
         const winnerName = data.winner === 'player1' ? data.player1Name : data.player2Name;
         winnerDiv.textContent = `${winnerName} WIN!`;
         winnerDiv.style.display = 'block';
+        // Show PTG on duration if winning reason is gap
+        if (data.winReason === 'gap') {
+          document.getElementById('duration').textContent = 'PTG';
+          lockDurationText = true;
+        } else {
+          // lock to prevent flicker on finish, but keep normal time display
+          lockDurationText = true;
+        }
       } else if (data.winner === 'draw') {
         winnerDiv.textContent = 'DRAW!';
         winnerDiv.style.display = 'block';
+        lockDurationText = true;
       } else {
         winnerDiv.style.display = 'none';
+        // unlock when no winner so timer can update again
+        lockDurationText = false;
       }
     });
 
@@ -379,6 +394,7 @@
 
     function updateDurationDisplay(value) {
       const el = document.getElementById('duration');
+      if (lockDurationText) return; // don't override PTG or locked text
       if (typeof value === 'number') {
         el.textContent = formatSecondsToMMSS(value);
       } else if (typeof value === 'string') {
@@ -405,10 +421,10 @@
       if (typeof data.duration === 'number') latestMatchDuration = data.duration;
       if (typeof data.restDuration === 'number') latestRestDuration = data.restDuration;
       // Only update visible duration according to current mode
-      if (currentTimer === 'match' && latestMatchDuration != null) {
+      if (!lockDurationText && currentTimer === 'match' && latestMatchDuration != null) {
         updateDurationDisplay(latestMatchDuration);
         setTimerMode('match');
-      } else if (currentTimer === 'rest' && latestRestDuration != null) {
+      } else if (!lockDurationText && currentTimer === 'rest' && latestRestDuration != null) {
         updateDurationDisplay(latestRestDuration);
         setTimerMode('rest');
       }
@@ -425,7 +441,7 @@
       if (payload && typeof payload === 'object' && typeof payload.duration === 'number') {
         latestRestDuration = payload.duration;
       }
-      if (currentTimer === 'rest') {
+      if (!lockDurationText && currentTimer === 'rest') {
         if (latestRestDuration != null) updateDurationDisplay(latestRestDuration);
       }
     });
@@ -437,20 +453,20 @@
       if (payload && typeof payload === 'object' && typeof payload.duration === 'number') {
         latestMatchDuration = payload.duration;
       }
-      if (latestMatchDuration != null) updateDurationDisplay(latestMatchDuration);
+      if (!lockDurationText && latestMatchDuration != null) updateDurationDisplay(latestMatchDuration);
     });
 
     // Support explicit tick events if server emits them
     socket.on('rest-timer-tick', (seconds) => {
       latestRestDuration = seconds;
       setTimerMode('rest');
-      if (currentTimer === 'rest') updateDurationDisplay(seconds);
+      if (!lockDurationText && currentTimer === 'rest') updateDurationDisplay(seconds);
     });
 
     socket.on('timer-tick', (seconds) => {
       latestMatchDuration = seconds;
       setTimerMode('match');
-      if (currentTimer === 'match') updateDurationDisplay(seconds);
+      if (!lockDurationText && currentTimer === 'match') updateDurationDisplay(seconds);
     });
   </script>
 </body>

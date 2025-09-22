@@ -31,6 +31,7 @@ let scoreboardData = {
   hits1: 0,   // Jumlah klik juri untuk Player 1
   hits2: 0,   // Jumlah klik juri untuk Player 2
   winner: null,
+  winReason: null, // 'gap' | 'pt24' | 'time' | 'dq' | 'manual' | null
   roundEnded: false
 };
 
@@ -73,6 +74,7 @@ io.on('connection', (socket) => {
 
     // Reset status saat ganti pertandingan
     scoreboardData.winner = null;
+    scoreboardData.winReason = null;
     scoreboardData.roundEnded = false;
     io.emit('scoreboard-update', scoreboardData);
   });
@@ -108,6 +110,7 @@ io.on('connection', (socket) => {
       clearInterval(timerInterval);
       scoreboardData.duration = scoreboardData.initialDuration;
       scoreboardData.winner = null;
+      scoreboardData.winReason = null;
       scoreboardData.roundEnded = false;
       io.emit('scoreboard-update', scoreboardData);
       io.emit('timer-control', 'pause');
@@ -209,12 +212,15 @@ io.on('connection', (socket) => {
 
     if (winner === 'player1') {
       scoreboardData.winner = 'player1';
+      scoreboardData.winReason = 'manual';
       scoreboardData.roundWins1++;
     } else if (winner === 'player2') {
       scoreboardData.winner = 'player2';
+      scoreboardData.winReason = 'manual';
       scoreboardData.roundWins2++;
     } else if (winner === 'draw') {
       scoreboardData.winner = 'draw';
+      scoreboardData.winReason = 'manual';
     }
 
     io.emit('scoreboard-update', scoreboardData);
@@ -230,6 +236,7 @@ io.on('connection', (socket) => {
     scoreboardData.hits1 = 0;
     scoreboardData.hits2 = 0;
     scoreboardData.winner = null;
+  scoreboardData.winReason = null;
     scoreboardData.roundEnded = false;
     scoreboardData.timerRunning = false;
     clearInterval(timerInterval);
@@ -324,6 +331,7 @@ function applyScoreChange(state, io, player, amount) {
     clearInterval(timerInterval);
 
     state.winner = player;
+    state.winReason = 'pt24';
     if (player === 'player1') {
       state.roundWins1 = (state.roundWins1 || 0) + 1;
     } else if (player === 'player2') {
@@ -333,7 +341,11 @@ function applyScoreChange(state, io, player, amount) {
     io.emit('scoreboard-update', state);
     io.emit('timer-control', 'pause');
     io.emit('rest-timer-control', 'reset');
+    return; // already finalized by 24-pt rule
   }
+
+  // If not finished by 24, check gap rule immediately
+  checkVictoryByPointsGap();
 }
 
 // Cek kemenangan karena selisih skor ≥12
@@ -348,9 +360,11 @@ function checkVictoryByPointsGap() {
 
     if (scoreboardData.score1 > scoreboardData.score2) {
       scoreboardData.winner = 'player1';
+      scoreboardData.winReason = 'gap';
       scoreboardData.roundWins1++;
     } else {
       scoreboardData.winner = 'player2';
+      scoreboardData.winReason = 'gap';
       scoreboardData.roundWins2++;
     }
 
@@ -369,12 +383,15 @@ function endRoundAutomatically() {
 
   if (scoreboardData.score1 > scoreboardData.score2) {
     scoreboardData.winner = 'player1';
+    scoreboardData.winReason = 'time';
     scoreboardData.roundWins1++;
   } else if (scoreboardData.score2 > scoreboardData.score1) {
     scoreboardData.winner = 'player2';
+    scoreboardData.winReason = 'time';
     scoreboardData.roundWins2++;
   } else {
     scoreboardData.winner = 'draw';
+    scoreboardData.winReason = 'time';
   }
 
   io.emit('scoreboard-update', scoreboardData);
@@ -387,6 +404,7 @@ function endRoundByDisqualification(winnerPlayer) {
   clearInterval(timerInterval);
 
   scoreboardData.winner = winnerPlayer;
+  scoreboardData.winReason = 'dq';
   if (winnerPlayer === 'player1') {
     scoreboardData.roundWins1++;
   } else {
