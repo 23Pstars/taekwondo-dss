@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Control 1 - Setup & Preparation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      color: white;
+      padding: 40px;
+      max-width: 700px;
+      margin: auto;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      text-align: center;
+      color: #00ff00;
+      margin-bottom: 30px;
+      font-size: 2.2em;
+    }
+
+    .section-title {
+      color: #00e5ff;
+      font-size: 1.3em;
+      font-weight: bold;
+      margin-top: 25px;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #00e5ff;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #e0e0e0;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px;
+      font-size: 1em;
+      border: 2px solid #333;
+      border-radius: 5px;
+      background: #222;
+      color: white;
+      box-sizing: border-box;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #00e5ff;
+      box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      font-size: 1.1em;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 10px;
+    }
+
+    .btn-primary {
+      background: #00ff00;
+      color: #000;
+    }
+
+    .btn-primary:hover {
+      background: #00dd00;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 255, 0, 0.3);
+    }
+
+    .btn-secondary {
+      background: #ff9800;
+      color: black;
+    }
+
+    .btn-secondary:hover {
+      background: #ffb74d;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(255, 152, 0, 0.3);
+    }
+
+    .info-box {
+      background: rgba(0, 229, 255, 0.1);
+      border-left: 4px solid #00e5ff;
+      padding: 15px;
+      margin-top: 25px;
+      border-radius: 5px;
+      color: #b0e0e6;
+    }
+
+    .info-box h3 {
+      color: #00e5ff;
+      margin-top: 0;
+    }
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+    }
+
+    .info-item:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      color: #aaa;
+    }
+
+    .info-value {
+      color: #00ff00;
+      font-weight: bold;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 20px;
+      }
+
+      .container {
+        padding: 20px;
+      }
+
+      h1 {
+        font-size: 1.8em;
+      }
+
+      .section-title {
+        font-size: 1.1em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>⚙️ CONTROL 1: SETUP & PREPARATION</h1>
+
+    <form id="setupForm">
+      <!-- Section 1: Player Information -->
+      <div class="section-title">👥 Informasi Pemain</div>
+
+      <div class="form-group">
+        <label for="player1Name">Player 1 Name (Red)</label>
+        <input type="text" id="player1Name" placeholder="e.g. JOHN DOE">
+      </div>
+
+      <div class="form-group">
+        <label for="player2Name">Player 2 Name (Blue)</label>
+        <input type="text" id="player2Name" placeholder="e.g. JANE SMITH">
+      </div>
+
+      <!-- Section 2: Match Information -->
+      <div class="section-title">🏆 Informasi Pertandingan</div>
+
+      <div class="form-group">
+        <label for="matchInfo">Match Info (Class - Category)</label>
+        <input type="text" id="matchInfo" placeholder="e.g. SENORS - Final M -58KG">
+      </div>
+
+      <div class="form-group">
+        <label for="matchId">Match ID</label>
+        <input type="text" id="matchId" placeholder="e.g. 1001">
+      </div>
+
+      <div class="form-group">
+        <label for="roundNumber">Round Number</label>
+        <select id="roundNumber">
+          <option value="ROUND 1">ROUND 1</option>
+          <option value="ROUND 2">ROUND 2</option>
+          <option value="ROUND 3">ROUND 3</option>
+          <option value="FINAL ROUND">FINAL ROUND</option>
+        </select>
+      </div>
+
+      <!-- Section 3: Timer Settings -->
+      <div class="section-title">⏱️ Pengaturan Timer</div>
+
+      <div class="form-group">
+        <label for="durationInput">Durasi per Ronde (MM:SS)</label>
+        <input type="text" id="durationInput" placeholder="e.g. 2:00" value="2:00">
+      </div>
+
+      <div class="form-group">
+        <label for="restDurationInput">Durasi Rest Time (MM:SS)</label>
+        <input type="text" id="restDurationInput" placeholder="e.g. 0:30" value="0:30">
+      </div>
+
+      <!-- Action Buttons -->
+      <button type="submit" class="btn-primary">💾 Simpan Pengaturan</button>
+      <button type="button" id="resetWinsBtn" class="btn-secondary">🔄 Reset #WON (Match Baru)</button>
+    </form>
+
+    <!-- Current Setup Info -->
+    <div class="info-box">
+      <h3>📋 Pengaturan Saat Ini</h3>
+      <div class="info-item">
+        <span class="info-label">Player 1:</span>
+        <span class="info-value" id="displayPlayer1">PLAYER 1</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Player 2:</span>
+        <span class="info-value" id="displayPlayer2">PLAYER 2</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Match:</span>
+        <span class="info-value" id="displayMatch">-</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Round:</span>
+        <span class="info-value" id="displayRound">ROUND 1</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Match Duration:</span>
+        <span class="info-value" id="displayDuration">2:00</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Rest Duration:</span>
+        <span class="info-value" id="displayRest">0:30</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Socket.IO -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    // Load data saat terhubung
+    socket.on('scoreboard-update', (data) => {
+      document.getElementById('player1Name').value = data.player1Name || 'PLAYER 1';
+      document.getElementById('player2Name').value = data.player2Name || 'PLAYER 2';
+      document.getElementById('matchInfo').value = data.matchInfo || '';
+      document.getElementById('matchId').value = data.matchId || '';
+      document.getElementById('roundNumber').value = data.roundNumber || 'ROUND 1';
+
+      const mins = Math.floor(data.initialDuration / 60);
+      const secs = (data.initialDuration % 60).toString().padStart(2, '0');
+      document.getElementById('durationInput').value = `${mins}:${secs}`;
+
+      // Update display info
+      updateDisplayInfo(data);
+    });
+
+    function updateDisplayInfo(data) {
+      document.getElementById('displayPlayer1').textContent = data.player1Name || 'PLAYER 1';
+      document.getElementById('displayPlayer2').textContent = data.player2Name || 'PLAYER 2';
+      document.getElementById('displayMatch').textContent = data.matchInfo || '-';
+      document.getElementById('displayRound').textContent = data.roundNumber || 'ROUND 1';
+
+      const mins = Math.floor(data.initialDuration / 60);
+      const secs = (data.initialDuration % 60).toString().padStart(2, '0');
+      document.getElementById('displayDuration').textContent = `${mins}:${secs}`;
+    }
+
+    // Update data umum
+    document.getElementById('setupForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const durationInput = document.getElementById('durationInput').value.trim();
+      let durationSeconds = 120;
+
+      const [m, s] = durationInput.split(':').map(Number);
+      if (!isNaN(m) && !isNaN(s) && s < 60 && m >= 0) {
+        durationSeconds = m * 60 + s;
+      } else {
+        alert('❌ Format durasi salah! Contoh: 2:00');
+        return;
+      }
+
+      const data = {
+        player1Name: (document.getElementById('player1Name').value || 'PLAYER 1').toUpperCase().trim(),
+        player2Name: (document.getElementById('player2Name').value || 'PLAYER 2').toUpperCase().trim(),
+        matchInfo: document.getElementById('matchInfo').value.trim(),
+        matchId: document.getElementById('matchId').value.trim(),
+        roundNumber: document.getElementById('roundNumber').value,
+        duration: durationSeconds
+      };
+
+      socket.emit('update-scoreboard', data);
+      alert('✅ Pengaturan berhasil disimpan!');
+    });
+
+    // Reset #WON
+    document.getElementById('resetWinsBtn').addEventListener('click', () => {
+      if (confirm('⚠️ Reset jumlah kemenangan ronde? (Pertandingan baru)\n\nYakin?')) {
+        socket.emit('reset-round-wins');
+        alert('✅ #WON berhasil direset!');
+      }
+    });
+  </script>
+</body>
+</html>

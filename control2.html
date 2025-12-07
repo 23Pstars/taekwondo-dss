@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Control 2 - Active Match</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #2d1b00 0%, #1a0000 100%);
+      color: white;
+      padding: 40px;
+      max-width: 800px;
+      margin: auto;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: rgba(0, 0, 0, 0.5);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    h1 {
+      text-align: center;
+      color: #ff6b00;
+      margin-bottom: 30px;
+      font-size: 2.2em;
+    }
+
+    .section-title {
+      color: #ff9500;
+      font-size: 1.3em;
+      font-weight: bold;
+      margin-top: 25px;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #ff9500;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #e0e0e0;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      font-size: 1.1em;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 10px;
+    }
+
+    .btn-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .btn-group.three {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .btn-start {
+      background: #00ff00;
+      color: #000;
+    }
+
+    .btn-start:hover {
+      background: #00dd00;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 255, 0, 0.3);
+    }
+
+    .btn-pause {
+      background: #ffeb3b;
+      color: #000;
+    }
+
+    .btn-pause:hover {
+      background: #fdd835;
+      transform: translateY(-2px);
+    }
+
+    .btn-reset {
+      background: #ff9800;
+      color: black;
+    }
+
+    .btn-reset:hover {
+      background: #ffb74d;
+      transform: translateY(-2px);
+    }
+
+    .btn-red {
+      background: #d32f2f;
+      color: white;
+    }
+
+    .btn-red:hover {
+      background: #f44336;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(211, 47, 47, 0.3);
+    }
+
+    .btn-blue {
+      background: #1976d2;
+      color: white;
+    }
+
+    .btn-blue:hover {
+      background: #1e88e5;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(25, 118, 210, 0.3);
+    }
+
+    .btn-danger {
+      background: #d32f2f;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #f44336;
+      transform: translateY(-2px);
+    }
+
+    .btn-draw {
+      background: #9c27b0;
+      color: white;
+    }
+
+    .btn-draw:hover {
+      background: #ab47bc;
+      transform: translateY(-2px);
+    }
+
+    .timer-display {
+      text-align: center;
+      font-size: 1.5em;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      margin-bottom: 15px;
+      color: #ffeb3b;
+      font-weight: bold;
+    }
+
+    .score-display {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .score-box {
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .score-box.red {
+      border: 2px solid #d32f2f;
+    }
+
+    .score-box.blue {
+      border: 2px solid #1976d2;
+    }
+
+    .score-player {
+      font-size: 0.9em;
+      color: #aaa;
+      margin-bottom: 5px;
+    }
+
+    .score-value {
+      font-size: 2.2em;
+      font-weight: bold;
+    }
+
+    .score-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .score-controls button {
+      padding: 8px;
+      font-size: 0.9em;
+      margin-bottom: 0;
+    }
+
+    .info-box {
+      background: rgba(255, 152, 0, 0.1);
+      border-left: 4px solid #ff9500;
+      padding: 15px;
+      margin-top: 25px;
+      border-radius: 5px;
+      color: #ffe0b2;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 20px;
+      }
+
+      .container {
+        padding: 20px;
+      }
+
+      h1 {
+        font-size: 1.8em;
+      }
+
+      .btn-group {
+        grid-template-columns: 1fr;
+      }
+
+      .btn-group.three {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎯 CONTROL 2: ACTIVE MATCH</h1>
+
+    <!-- Current Scores -->
+    <div class="score-display">
+      <div class="score-box red">
+        <div class="score-player" id="displayPlayer1">PLAYER 1</div>
+        <div class="score-value" id="currentScore1">0</div>
+        <div class="score-controls">
+          <button class="btn-red" onclick="adjustScore('player1', 1)">+1</button>
+          <button class="btn-red" onclick="adjustScore('player1', -1)">-1</button>
+        </div>
+      </div>
+
+      <div class="score-box blue">
+        <div class="score-player" id="displayPlayer2">PLAYER 2</div>
+        <div class="score-value" id="currentScore2">0</div>
+        <div class="score-controls">
+          <button class="btn-blue" onclick="adjustScore('player2', 1)">+1</button>
+          <button class="btn-blue" onclick="adjustScore('player2', -1)">-1</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 1: Match Timer Control -->
+    <div class="section-title">⏱️ Match Timer</div>
+
+    <div class="timer-display" id="timerDisplay">2:00</div>
+
+    <div class="form-group">
+      <div class="btn-group three">
+        <button id="startBtn" class="btn-start">▶️ Start</button>
+        <button id="pauseBtn" class="btn-pause" style="display: none;">⏸️ Pause</button>
+        <button id="resetBtn" class="btn-reset">🔄 Reset</button>
+      </div>
+    </div>
+
+    <!-- Section 2: Rest Timer Control -->
+    <div class="section-title">😌 Rest Timer</div>
+
+    <div class="form-group">
+      <div class="btn-group three">
+        <button id="restStartBtn" class="btn-start">▶️ Start</button>
+        <button id="restPauseBtn" class="btn-pause" style="display: none;">⏸️ Pause</button>
+        <button id="restResetBtn" class="btn-reset">🔄 Reset</button>
+      </div>
+    </div>
+
+    <!-- Section 3: Penalties -->
+    <div class="section-title">⚠️ Penalti: Gam-Jeom</div>
+
+    <div class="form-group">
+      <div class="btn-group">
+        <button class="btn-red" onclick="addGamJeom('player1')">Gam-Jeom<br>Player 1</button>
+        <button class="btn-blue" onclick="addGamJeom('player2')">Gam-Jeom<br>Player 2</button>
+      </div>
+    </div>
+
+    <!-- Section 4: Winner Determination -->
+    <div class="section-title">🏆 Penentuan Pemenang</div>
+
+    <div class="form-group">
+      <div class="btn-group three">
+        <button class="btn-red" onclick="setWinner('player1')">Player 1<br>Menang</button>
+        <button class="btn-draw" onclick="setWinner('draw')">SERI<br>Draw</button>
+        <button class="btn-blue" onclick="setWinner('player2')">Player 2<br>Menang</button>
+      </div>
+    </div>
+
+    <!-- Section 5: Reset Controls -->
+    <div class="section-title">🔄 Reset</div>
+
+    <div class="form-group">
+      <button id="resetScoresBtn" class="btn-danger">Reset Skor & Penalti</button>
+    </div>
+
+    <!-- Info Box -->
+    <div class="info-box">
+      <strong>💡 Tips:</strong><br>
+      • Gunakan Control 1 untuk setup sebelum pertandingan<br>
+      • Gunakan Control 2 selama pertandingan berlangsung<br>
+      • Klik tombol dengan hati-hati saat pertandingan aktif
+    </div>
+  </div>
+
+  <!-- Socket.IO -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    let currentData = {};
+
+    // Load initial data
+    socket.on('scoreboard-update', (data) => {
+      currentData = data;
+      document.getElementById('displayPlayer1').textContent = data.player1Name || 'PLAYER 1';
+      document.getElementById('displayPlayer2').textContent = data.player2Name || 'PLAYER 2';
+      document.getElementById('currentScore1').textContent = data.score1 || 0;
+      document.getElementById('currentScore2').textContent = data.score2 || 0;
+
+      const mins = Math.floor(data.duration / 60).toString().padStart(2, '0');
+      const secs = (data.duration % 60).toString().padStart(2, '0');
+      document.getElementById('timerDisplay').textContent = `${mins}:${secs}`;
+    });
+
+    // Timer Controls
+    document.getElementById('startBtn').addEventListener('click', () => {
+      socket.emit('timer-control', 'start');
+      document.getElementById('startBtn').style.display = 'none';
+      document.getElementById('pauseBtn').style.display = 'inline';
+    });
+
+    document.getElementById('pauseBtn').addEventListener('click', () => {
+      socket.emit('timer-control', 'pause');
+      document.getElementById('pauseBtn').style.display = 'none';
+      document.getElementById('startBtn').style.display = 'inline';
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      socket.emit('timer-control', 'reset');
+      document.getElementById('pauseBtn').style.display = 'none';
+      document.getElementById('startBtn').style.display = 'inline';
+    });
+
+    // Rest Timer Controls
+    function parseTimeToSeconds(str) {
+      if (!str) return 0;
+      const parts = str.split(':').map(s => parseInt(s, 10));
+      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) return parts[0]*60 + parts[1];
+      if (parts.length === 1 && !isNaN(parts[0])) return parts[0];
+      return 0;
+    }
+
+    document.getElementById('restStartBtn').addEventListener('click', () => {
+      const mins = Math.floor(currentData.initialDuration / 60);
+      const secs = currentData.initialDuration % 60;
+      const restDuration = Math.max(30, Math.floor(secs / 2)); // default 30 sec or half of match duration
+      socket.emit('rest-timer-control', { action: 'start', duration: restDuration });
+      document.getElementById('restStartBtn').style.display = 'none';
+      document.getElementById('restPauseBtn').style.display = 'inline';
+    });
+
+    document.getElementById('restPauseBtn').addEventListener('click', () => {
+      socket.emit('rest-timer-control', { action: 'pause' });
+      document.getElementById('restPauseBtn').style.display = 'none';
+      document.getElementById('restStartBtn').style.display = 'inline';
+    });
+
+    document.getElementById('restResetBtn').addEventListener('click', () => {
+      socket.emit('rest-timer-control', { action: 'reset' });
+      document.getElementById('restPauseBtn').style.display = 'none';
+      document.getElementById('restStartBtn').style.display = 'inline';
+    });
+
+    // Score adjustment
+    function adjustScore(player, amount) {
+      socket.emit('adjust-score', { player, amount });
+    }
+
+    // Gam-Jeom
+    function addGamJeom(player) {
+      socket.emit('add-gam-jeom', player);
+    }
+
+    // Winner determination
+    function setWinner(winner) {
+      const playerName = winner === 'player1' ? currentData.player1Name : 
+                         winner === 'player2' ? currentData.player2Name : 'DRAW';
+      if (confirm(`Tentukan ${playerName} sebagai pemenang?`)) {
+        socket.emit('force-winner', winner);
+      }
+    }
+
+    // Reset scores
+    document.getElementById('resetScoresBtn').addEventListener('click', () => {
+      if (confirm('⚠️ Reset semua skor dan penalti?\n\nYakin?')) {
+        socket.emit('reset-scores');
+      }
+    });
+
+    // Update UI based on timer events
+    socket.on('timer-control', (action) => {
+      const startBtn = document.getElementById('startBtn');
+      const pauseBtn = document.getElementById('pauseBtn');
+      if (action === 'start') {
+        startBtn.style.display = 'none';
+        pauseBtn.style.display = 'inline';
+      } else if (action === 'pause') {
+        pauseBtn.style.display = 'none';
+        startBtn.style.display = 'inline';
+      }
+    });
+
+    socket.on('rest-timer-control', (action) => {
+      const startBtn = document.getElementById('restStartBtn');
+      const pauseBtn = document.getElementById('restPauseBtn');
+      if (action === 'start') {
+        startBtn.style.display = 'none';
+        pauseBtn.style.display = 'inline';
+      } else if (action === 'pause') {
+        pauseBtn.style.display = 'none';
+        startBtn.style.display = 'inline';
+      }
+    });
+  </script>
+</body>
+</html>
